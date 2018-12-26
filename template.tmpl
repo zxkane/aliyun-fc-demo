@@ -6,6 +6,16 @@ Resources:
     Properties:
       Description: 'The fc demo of realtime weather query'
       InternetAccess: true
+      Policies:
+        - AliyunOTSReadOnlyAccess
+        - AliyunOTSWriteOnlyAccess
+      {{ if $USING_VPC }}
+      VpcConfig:
+        VpcId: {{ $VPC_ID }}
+        {{ $switches := split "," $VPC_SWITCH_IDS }}
+        VSwitchIds: [ {{ range $index, $switch := $switches }} {{ if gt $index 0 }} , {{ end }} '{{ $switch }}' {{ end }} ]
+        SecurityGroupId: {{ $SECURITY_GROUP_ID }}
+      {{ end }}
       {{ if $USING_LOG }}
       LogConfig:
         Project: {{ $LOG_PROJECT }}
@@ -18,10 +28,36 @@ Resources:
         Handler: com.github.zxkane.aliyunfc.demo.Weather::handleRequest
         Runtime: java8
         Description: 'Weather query'
-        MemorySize: 128
+        MemorySize: 192
         InitializationTimeout: 3
         Timeout: 10
         CodeUri: './build/libs/aliyun-fc-demo-1.0.0-SNAPSHOT-all.jar'
+        EnvironmentVariables:
+          DTS_ENDPOINT: {{ $DTS_ENDPOINT }}
+          DTS_ACCESS_KEY: {{ $DTS_ACCESS_KEY }}
+          DTS_KEY_SECRET: {{ $DTS_KEY_SECRET }}
+          DTS_INSTANCE_NAME: {{ $DTS_INSTANCE_NAME }}
+    weather-fetch: # function name
+      Type: 'Aliyun::Serverless::Function'
+      Properties:
+        Initializer: com.github.zxkane.aliyunfc.demo.WeatherFetch::initialize
+        Handler: com.github.zxkane.aliyunfc.demo.WeatherFetch::handleRequest
+        Runtime: java8
+        Description: 'Weather query'
+        MemorySize: 192
+        InitializationTimeout: 3
+        Timeout: 10
+        CodeUri: './build/libs/aliyun-fc-demo-1.0.0-SNAPSHOT-all.jar'
+        EnvironmentVariables:
+          DTS_ENDPOINT: {{ $DTS_ENDPOINT }}
+          DTS_INSTANCE_NAME: {{ $DTS_INSTANCE_NAME }}
+      Events:
+        TmTrigger:
+          Type: Timer
+          Properties:
+            Payload: "fetch-weather"
+            CronExpression: "0 */5 * * * *"  # 每5分钟
+            Enable: true
   weather_gateway: # Api Group
     Type: 'Aliyun::Serverless::Api'
     Properties:
@@ -29,7 +65,7 @@ Resources:
       DefinitionBody:
         '/weather':
           get:
-            x-aliyun-apigateway-api-name: weather-query
+            x-aliyun-apigateway-api-name: weather_query
             x-aliyun-apigateway-request-config:
               requestProtocol: "HTTP"
               requestMode: "MAPPING"
@@ -42,7 +78,7 @@ Resources:
             x-aliyun-apigateway-fc:
               arn: acs:fc:::services/${weather-fc-demo.Arn}/functions/${weather-query.Arn}/
               timeout: 13000
-  weather-store:
+  {{ $DTS_INSTANCE_NAME }}:
     Type: 'Aliyun::Serverless::TableStore'
     Properties:
       ClusterType: HYBRID

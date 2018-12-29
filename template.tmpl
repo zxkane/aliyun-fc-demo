@@ -34,8 +34,6 @@ Resources:
         CodeUri: './build/libs/aliyun-fc-demo-1.0.0-SNAPSHOT-all.jar'
         EnvironmentVariables:
           DTS_ENDPOINT: {{ $DTS_ENDPOINT }}
-          DTS_ACCESS_KEY: {{ $DTS_ACCESS_KEY }}
-          DTS_KEY_SECRET: {{ $DTS_KEY_SECRET }}
           DTS_INSTANCE_NAME: {{ $DTS_INSTANCE_NAME }}
     weather-fetch: # function name
       Type: 'Aliyun::Serverless::Function'

@@ -7,7 +7,6 @@ demo集成了以下触发器:
 - Timer
 
 #### 如何部署
-- 如需开启函数日志，需提前手动创建对应的SLS日志project以及log store
 - 通过[sigil](https://github.com/gliderlabs/sigil)将`template.tmpl`中变量替换为实际的配置，具体使用方式参考`.gitlab-ci.yml`
 - 通过官方工具[fun](https://github.com/aliyun/fun)部署
 

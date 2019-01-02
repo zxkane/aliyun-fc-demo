@@ -87,3 +87,14 @@ Resources:
         PrimaryKeyList:
           - Name: city
             Type: STRING
+  {{ if $USING_LOG }}
+  {{ $LOG_PROJECT }}:
+    Type: 'Aliyun::Serverless::Log'
+    Properties:
+      Description: 'log project for aliyun fc demo'
+    {{ $LOG_STORE }}:
+      Type: 'Aliyun::Serverless::Log::Logstore'
+      Properties:
+        TTL: 10
+        ShardCount: 1
+  {{ end }}
